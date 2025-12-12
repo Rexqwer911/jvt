@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $packageName = 'jvt'
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v0.1.0/jvt-windows-amd64.zip'
+$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v1.0.0/jvt-windows-amd64.zip'
 
 $packageArgs = @{
   packageName    = $packageName

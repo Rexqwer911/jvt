@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 download, install, and switch between different Java versions easily.
 
 Similar to nvm for Node.js, jvt simplifies Java version management on Windows.`,
-	Version: "0.1.0",
+	Version: "1.0.0",
 }
 
 // Execute runs the root command
