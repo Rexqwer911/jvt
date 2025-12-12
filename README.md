@@ -1,6 +1,18 @@
 # JVT - Java Version Tool
 
+[![GitHub release](https://img.shields.io/github/v/release/rexqwer911/jvt)](https://github.com/rexqwer911/jvt/releases/latest)
+[![Chocolatey](https://img.shields.io/chocolatey/v/jvt)](https://community.chocolatey.org/packages/jvt)
+[![License](https://img.shields.io/github/license/rexqwer911/jvt)](LICENSE)
+
 A command-line utility for Windows that simplifies downloading, installing, and switching between different Java versions - similar to nvm for Node.js.
+
+## 📥 Downloads
+
+**Latest Release:**
+- **[Download jvt.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt.exe)** - Standalone executable
+- **[Download jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)** - ZIP archive
+
+Or view [all releases](https://github.com/rexqwer911/jvt/releases)
 
 ## Features
 
@@ -13,14 +25,19 @@ A command-line utility for Windows that simplifies downloading, installing, and 
 
 ## Installation
 
-### Via Chocolatey (Recommended)
+### Option 1: Direct Download (Easiest)
+1. **[Download jvt.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt.exe)**
+2. Move `jvt.exe` to a directory in your PATH (e.g., `C:\Windows\System32` or `C:\Program Files\jvt`)
+3. Open a new terminal and run `jvt --help` to verify installation
+
+### Option 2: Via Chocolatey
 ```bash
 choco install jvt
 ```
 
-### Manual Installation
-1. Download the latest release from [Releases](https://github.com/rexqwer911/jvt/releases)
-2. Extract to a directory (e.g., `C:\Program Files\jvt`)
+### Option 3: Manual Installation from ZIP
+1. Download [jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)
+2. Extract `jvt.exe` to a directory (e.g., `C:\Program Files\jvt`)
 3. Add the directory to your PATH environment variable
 
 ## Usage
