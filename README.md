@@ -6,7 +6,7 @@
 
 A command-line utility for Windows that simplifies downloading, installing, and switching between different Java versions - similar to nvm for Node.js.
 
-## 📥 Downloads
+## Downloads
 
 **Latest Release:**
 - **[Download jvt.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt.exe)** - Standalone executable
