@@ -8,9 +8,9 @@
     <title>Java Version Tool (JVT)</title>
     <authors>rexqwer911</authors>
     <projectUrl>https://github.com/rexqwer911/jvt</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/rexqwer911/jvt/main/icon.png</iconUrl>
     <licenseUrl>https://github.com/rexqwer911/jvt/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <projectSourceUrl>https://github.com/rexqwer911/jvt</projectSourceUrl>
     <docsUrl>https://github.com/rexqwer911/jvt/blob/main/README.md</docsUrl>
     <bugTrackerUrl>https://github.com/rexqwer911/jvt/issues</bugTrackerUrl>
     <tags>jvt java jdk version manager cli windows</tags>
