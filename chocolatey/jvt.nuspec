@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>jvt</id>
+    <version>0.1.0</version>
+    <packageSourceUrl>https://github.com/rexqwer911/jvt</packageSourceUrl>
+    <owners>rexqwer911</owners>
+    <title>Java Version Tool (JVT)</title>
+    <authors>rexqwer911</authors>
+    <projectUrl>https://github.com/rexqwer911/jvt</projectUrl>
+    <licenseUrl>https://github.com/rexqwer911/jvt/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/rexqwer911/jvt</projectSourceUrl>
+    <docsUrl>https://github.com/rexqwer911/jvt/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/rexqwer911/jvt/issues</bugTrackerUrl>
+    <tags>jvt java jdk version manager cli windows</tags>
+    <summary>A command-line utility for managing multiple Java versions on Windows</summary>
+    <description>
+JVT (Java Version Tool) is a command-line utility for Windows that simplifies downloading, installing, and switching between different Java versions - similar to nvm for Node.js.
+
+Features:
+- Download and install multiple Java versions
+- Easily switch between installed Java versions
+- Remove unused Java installations
+- List available and installed Java versions
+- Set default Java version
+- Support for major Java distributions (Oracle JDK, OpenJDK, Temurin, etc.)
+    </description>
+    <releaseNotes>https://github.com/rexqwer911/jvt/releases</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

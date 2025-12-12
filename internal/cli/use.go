@@ -1,0 +1,150 @@
+package cli
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/rexqwer911/jvt/internal/config"
+	"github.com/rexqwer911/jvt/internal/install"
+	"github.com/rexqwer911/jvt/internal/version"
+	"github.com/spf13/cobra"
+)
+
+var useCmd = &cobra.Command{
+	Use:   "use <version>",
+	Short: "Switch to a specific Java version",
+	Long:  "Switch the active Java version for the current session.",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		versionStr := args[0]
+
+		cfg, err := config.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get config: %w", err)
+		}
+
+		// Find installed version matching the input
+		installer := install.NewInstaller(cfg.InstallDir)
+		versions, err := installer.ListInstalled()
+		if err != nil {
+			return fmt.Errorf("failed to list installed versions: %w", err)
+		}
+
+		if len(versions) == 0 {
+			return fmt.Errorf("no Java versions installed. Use 'jvt install <version>' first")
+		}
+
+		// Try to find matching version
+		var matchedVersion string
+		if _, err := strconv.Atoi(versionStr); err == nil {
+			// Search by major version
+			for _, v := range versions {
+				if len(v) >= len(versionStr) && v[0:len(versionStr)] == versionStr {
+					matchedVersion = v
+					break
+				}
+			}
+		} else {
+			// Exact match
+			for _, v := range versions {
+				if v == versionStr {
+					matchedVersion = v
+					break
+				}
+			}
+		}
+
+		if matchedVersion == "" {
+			return fmt.Errorf("version %s is not installed", versionStr)
+		}
+
+		// Set environment
+		mgr := version.NewManager(cfg.InstallDir)
+		if err := mgr.SetEnvironment(matchedVersion); err != nil {
+			return fmt.Errorf("failed to set environment: %w", err)
+		}
+
+		fmt.Printf("✓ Now using Java %s\n", matchedVersion)
+		fmt.Println("Note: This only affects the current terminal session.")
+		fmt.Printf("To set as default, use: jvt default %s\n", versionStr)
+
+		return nil
+	},
+}
+
+var currentCmd = &cobra.Command{
+	Use:   "current",
+	Short: "Show the currently active Java version",
+	Long:  "Display which Java version is currently active.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get config: %w", err)
+		}
+
+		mgr := version.NewManager(cfg.InstallDir)
+		currentVersion, err := mgr.GetCurrentVersion()
+		if err != nil {
+			fmt.Println("No jvt-managed Java version is currently active.")
+			fmt.Println("Use 'jvt use <version>' to activate a version.")
+			return nil
+		}
+
+		fmt.Printf("Current Java version: %s\n", currentVersion)
+		return nil
+	},
+}
+
+var defaultCmd = &cobra.Command{
+	Use:   "default <version>",
+	Short: "Set the default Java version",
+	Long:  "Set which Java version should be used by default (persistent).",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		versionStr := args[0]
+
+		cfg, err := config.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get config: %w", err)
+		}
+
+		// Find installed version
+		installer := install.NewInstaller(cfg.InstallDir)
+		versions, err := installer.ListInstalled()
+		if err != nil {
+			return fmt.Errorf("failed to list installed versions: %w", err)
+		}
+
+		var matchedVersion string
+		if _, err := strconv.Atoi(versionStr); err == nil {
+			for _, v := range versions {
+				if len(v) >= len(versionStr) && v[0:len(versionStr)] == versionStr {
+					matchedVersion = v
+					break
+				}
+			}
+		} else {
+			for _, v := range versions {
+				if v == versionStr {
+					matchedVersion = v
+					break
+				}
+			}
+		}
+
+		if matchedVersion == "" {
+			return fmt.Errorf("version %s is not installed", versionStr)
+		}
+
+		// Set as default (persistent)
+		mgr := version.NewManager(cfg.InstallDir)
+		if err := mgr.SetUserEnvironment(matchedVersion); err != nil {
+			return fmt.Errorf("failed to set default version: %w", err)
+		}
+
+		fmt.Printf("✓ Java %s set as default\n", matchedVersion)
+		fmt.Println("\nPlease restart your terminal for changes to take effect.")
+
+		return nil
+	},
+}

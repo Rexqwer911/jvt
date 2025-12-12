@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          
+      - name: Get version from tag
+        id: get_version
+        run: |
+          $version = $env:GITHUB_REF -replace 'refs/tags/v', ''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+        shell: pwsh
+        
+      - name: Build binary
+        run: |
+          go build -ldflags="-s -w -X main.version=${{ steps.get_version.outputs.VERSION }}" -o jvt.exe cmd/jvt/main.go
+        shell: pwsh
+        
+      - name: Create release archive
+        run: |
+          Compress-Archive -Path jvt.exe -DestinationPath jvt-windows-amd64.zip
+        shell: pwsh
+        
+      - name: Calculate checksums
+        id: checksums
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 jvt-windows-amd64.zip).Hash
+          echo "ZIP_SHA256=$hash" >> $env:GITHUB_OUTPUT
+          echo "ZIP checksum: $hash"
+          
+          $exeHash = (Get-FileHash -Algorithm SHA256 jvt.exe).Hash
+          echo "EXE_SHA256=$exeHash" >> $env:GITHUB_OUTPUT
+          echo "EXE checksum: $exeHash"
+        shell: pwsh
+        
+      - name: Create checksums file
+        run: |
+          @"
+          SHA256 Checksums:
+          
+          jvt-windows-amd64.zip: ${{ steps.checksums.outputs.ZIP_SHA256 }}
+          jvt.exe: ${{ steps.checksums.outputs.EXE_SHA256 }}
+          "@ | Out-File -FilePath checksums.txt -Encoding utf8
+        shell: pwsh
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            jvt-windows-amd64.zip
+            jvt.exe
+            checksums.txt
+          body: |
+            ## JVT v${{ steps.get_version.outputs.VERSION }}
+            
+            ### Installation
+            
+            **Via Chocolatey (Recommended):**
+            ```
+            choco install jvt
+            ```
+            
+            **Manual Installation:**
+            1. Download `jvt-windows-amd64.zip`
+            2. Extract `jvt.exe` to a directory in your PATH
+            3. Run `jvt --help` to get started
+            
+            ### Checksums
+            
+            **jvt-windows-amd64.zip:**
+            ```
+            SHA256: ${{ steps.checksums.outputs.ZIP_SHA256 }}
+            ```
+            
+            **jvt.exe:**
+            ```
+            SHA256: ${{ steps.checksums.outputs.EXE_SHA256 }}
+            ```
+            
+            ### Usage
+            
+            ```bash
+            # List available Java versions
+            jvt list-remote
+            
+            # Install a specific version
+            jvt install 21
+            
+            # Use a version
+            jvt use 21
+            
+            # Set default version
+            jvt default 21
+            ```
+            
+            See [README.md](https://github.com/rexqwer911/jvt/blob/main/README.md) for full documentation.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
