@@ -18,6 +18,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={commonpf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
+DisableProgramGroupPage=yes
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
 ;kbbyte

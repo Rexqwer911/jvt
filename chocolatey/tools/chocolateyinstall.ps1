@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 
 $packageName = 'jvt'
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v1.0.0/jvt-windows-amd64.zip'
+$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v1.1.0/jvt-windows-amd64.zip'
 
 $packageArgs = @{
   packageName    = $packageName
   unzipLocation  = $toolsDir
   url64bit       = $url64
-  checksum64     = '001A2428A13AFEA7F63F572C21386B710C54A14A0ED888FD8131FF28CB15A9C7'
+  checksum64     = '3E193B663B83D1464BA67A715BD25C2CA159193B5092016A934A478422DF37E0'
   checksumType64 = 'sha256'
 }
 
