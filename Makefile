@@ -55,3 +55,8 @@ choco-pack: release ## Create Chocolatey package
 	@echo "Creating Chocolatey package..."
 	@cd chocolatey && choco pack
 	@echo "Chocolatey package created"
+
+installer: build ## Build Windows Installer (requires Inno Setup)
+	@echo "Building Windows Installer..."
+	@iscc installer/jvt.iss
+	@echo "Installer created: installer/Output/jvt-setup.exe"

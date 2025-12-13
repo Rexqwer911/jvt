@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>jvt</id>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packageSourceUrl>https://github.com/rexqwer911/jvt</packageSourceUrl>
     <owners>rexqwer911</owners>
     <title>Java Version Tool (JVT)</title>
@@ -23,7 +23,6 @@ Features:
 - Easily switch between installed Java versions
 - Remove unused Java installations
 - List available and installed Java versions
-- Set default Java version
 - Support for major Java distributions (Oracle JDK, OpenJDK, Temurin, etc.)
     </description>
     <releaseNotes>https://github.com/rexqwer911/jvt/releases</releaseNotes>

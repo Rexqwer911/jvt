@@ -9,7 +9,7 @@ A command-line utility for Windows that simplifies downloading, installing, and 
 ## Downloads
 
 **Latest Release:**
-- **[Download jvt.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt.exe)** - Standalone executable
+- **[Download jvt-installer.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-installer.exe)** - Installer executable
 - **[Download jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)** - ZIP archive
 
 Or view [all releases](https://github.com/rexqwer911/jvt/releases)
@@ -20,15 +20,13 @@ Or view [all releases](https://github.com/rexqwer911/jvt/releases)
 - Easily switch between installed Java versions
 - Remove unused Java installations
 - List available and installed Java versions
-- Set default Java version
 - Support for major Java distributions (Oracle JDK, OpenJDK, Temurin, etc.)
 
 ## Installation
 
 ### Option 1: Direct Download (Easiest)
-1. **[Download jvt.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt.exe)**
-2. Move `jvt.exe` to a directory in your PATH (e.g., `C:\Windows\System32` or `C:\Program Files\jvt`)
-3. Open a new terminal and run `jvt --help` to verify installation
+1. **[Download jvt-installer.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-installer.exe)**
+2. Run the installer
 
 ### Option 2: Via Chocolatey
 ```bash
@@ -55,9 +53,6 @@ jvt list
 # Use a specific version
 jvt use 21
 
-# Set default version
-jvt default 21
-
 # Uninstall a version
 jvt uninstall 11
 
@@ -77,6 +72,10 @@ java -version
 ```bash
 go build -o jvt.exe cmd/jvt/main.go
 ```
+or
+```bash
+make build
+```
 
 ## Project Structure
 
@@ -92,6 +91,7 @@ jvt/
 │   ├── install/             # Installation logic
 │   ├── registry/            # Java distribution registry
 │   └── version/             # Version management
+├── installer/               # Installer files
 ├── chocolatey/              # Chocolatey package files
 ├── go.mod
 ├── go.sum

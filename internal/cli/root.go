@@ -11,11 +11,12 @@ var rootCmd = &cobra.Command{
 download, install, and switch between different Java versions easily.
 
 Similar to nvm for Node.js, jvt simplifies Java version management on Windows.`,
-	Version: "1.0.0",
+	Version: "1.1.0",
 }
 
 // Execute runs the root command
 func Execute() error {
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	return rootCmd.Execute()
 }
 
@@ -26,5 +27,4 @@ func init() {
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(currentCmd)
-	rootCmd.AddCommand(defaultCmd)
 }

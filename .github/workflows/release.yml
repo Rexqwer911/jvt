@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
+          check-latest: true
           
       - name: Get version from tag
         id: get_version
@@ -32,12 +33,21 @@ jobs:
         
       - name: Build binary
         run: |
-          go build -ldflags="-s -w -X main.version=${{ steps.get_version.outputs.VERSION }}" -o jvt.exe cmd/jvt/main.go
+          go build -ldflags="-s -w -X main.Version=${{ steps.get_version.outputs.VERSION }}" -o build/jvt.exe cmd/jvt/main.go
         shell: pwsh
         
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup
+
+      - name: Build Installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/jvt.iss
+        shell: pwsh
+
       - name: Create release archive
         run: |
-          Compress-Archive -Path jvt.exe -DestinationPath jvt-windows-amd64.zip
+          Compress-Archive -Path build/jvt.exe -DestinationPath jvt-windows-amd64.zip
         shell: pwsh
         
       - name: Calculate checksums
@@ -47,9 +57,13 @@ jobs:
           echo "ZIP_SHA256=$hash" >> $env:GITHUB_OUTPUT
           echo "ZIP checksum: $hash"
           
-          $exeHash = (Get-FileHash -Algorithm SHA256 jvt.exe).Hash
+          $exeHash = (Get-FileHash -Algorithm SHA256 build/jvt.exe).Hash
           echo "EXE_SHA256=$exeHash" >> $env:GITHUB_OUTPUT
           echo "EXE checksum: $exeHash"
+
+          $setupHash = (Get-FileHash -Algorithm SHA256 installer/Output/jvt-setup.exe).Hash
+          echo "SETUP_SHA256=$setupHash" >> $env:GITHUB_OUTPUT
+          echo "SETUP checksum: $setupHash"
         shell: pwsh
         
       - name: Create checksums file
@@ -59,60 +73,40 @@ jobs:
           
           jvt-windows-amd64.zip: ${{ steps.checksums.outputs.ZIP_SHA256 }}
           jvt.exe: ${{ steps.checksums.outputs.EXE_SHA256 }}
+          jvt-setup.exe: ${{ steps.checksums.outputs.SETUP_SHA256 }}
           "@ | Out-File -FilePath checksums.txt -Encoding utf8
         shell: pwsh
         
       - name: Create Release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             jvt-windows-amd64.zip
-            jvt.exe
+            build/jvt.exe
+            installer/Output/jvt-setup.exe
             checksums.txt
           body: |
             ## JVT v${{ steps.get_version.outputs.VERSION }}
             
             ### Installation
             
-            **Via Chocolatey (Recommended):**
-            ```
-            choco install jvt
-            ```
+            **Installer (Recommended):**
+            1. Download `jvt-setup.exe`
+            2. Run the installer
             
-            **Manual Installation:**
+            **Manual:**
             1. Download `jvt-windows-amd64.zip`
             2. Extract `jvt.exe` to a directory in your PATH
-            3. Run `jvt --help` to get started
             
-            ### Checksums
+            ### Checksums (SHA256)
             
-            **jvt-windows-amd64.zip:**
-            ```
-            SHA256: ${{ steps.checksums.outputs.ZIP_SHA256 }}
-            ```
+            | File | Checksum |
+            |---|---|
+            | jvt-setup.exe | `${{ steps.checksums.outputs.SETUP_SHA256 }}` |
+            | jvt.exe | `${{ steps.checksums.outputs.EXE_SHA256 }}` |
+            | jvt-windows-amd64.zip | `${{ steps.checksums.outputs.ZIP_SHA256 }}` |
             
-            **jvt.exe:**
-            ```
-            SHA256: ${{ steps.checksums.outputs.EXE_SHA256 }}
-            ```
-            
-            ### Usage
-            
-            ```bash
-            # List available Java versions
-            jvt list-remote
-            
-            # Install a specific version
-            jvt install 21
-            
-            # Use a version
-            jvt use 21
-            
-            # Set default version
-            jvt default 21
-            ```
-            
-            See [README.md](https://github.com/rexqwer911/jvt/blob/main/README.md) for full documentation.
           draft: false
           prerelease: false
         env:

@@ -39,21 +39,7 @@ func (m *Manager) SetEnvironment(version string) error {
 
 	// Update PATH for current process
 	currentPath := os.Getenv("PATH")
-
-	// Remove any existing Java paths
-	pathParts := strings.Split(currentPath, ";")
-	var newPathParts []string
-	for _, part := range pathParts {
-		if !strings.Contains(strings.ToLower(part), "java") || strings.Contains(part, m.installDir) {
-			if !strings.Contains(part, m.installDir) {
-				newPathParts = append(newPathParts, part)
-			}
-		}
-	}
-
-	// Add new Java bin to the front
-	newPathParts = append([]string{javaBin}, newPathParts...)
-	newPath := strings.Join(newPathParts, ";")
+	newPath := m.updatePathString(currentPath, javaBin)
 
 	if err := os.Setenv("PATH", newPath); err != nil {
 		return fmt.Errorf("failed to set PATH: %w", err)
@@ -91,48 +77,97 @@ func (m *Manager) SetUserEnvironment(version string) error {
 		return fmt.Errorf("failed to read PATH: %w", err)
 	}
 
-	// Remove ALL Java-related paths (not just jvt)
-	pathParts := strings.Split(currentPath, ";")
-	var newPathParts []string
-	var removedPaths []string
-
-	for _, part := range pathParts {
-		partLower := strings.ToLower(part)
-		// Remove if contains java, jdk, jre, or adoptium
-		if strings.Contains(partLower, "java") ||
-			strings.Contains(partLower, "jdk") ||
-			strings.Contains(partLower, "jre") ||
-			strings.Contains(partLower, "adoptium") ||
-			strings.Contains(partLower, "temurin") {
-			removedPaths = append(removedPaths, part)
-		} else if part != "" {
-			newPathParts = append(newPathParts, part)
-		}
-	}
-
-	// Add new Java bin to the BEGINNING
-	newPathParts = append([]string{javaBin}, newPathParts...)
-	newPath := strings.Join(newPathParts, ";")
+	newPath := m.updatePathString(currentPath, javaBin)
 
 	if err := key.SetStringValue("Path", newPath); err != nil {
 		return fmt.Errorf("failed to set PATH: %w", err)
 	}
 
-	// Show what was removed
-	if len(removedPaths) > 0 {
-		fmt.Println("\nRemoved the following Java paths from user PATH:")
-		for _, p := range removedPaths {
-			fmt.Printf("  - %s\n", p)
-		}
-	}
-
 	// Check for system-level Java
 	m.checkSystemJava()
 
-	// Broadcast environment change
-	m.broadcastEnvironmentChange()
+	return nil
+}
+
+// SetSystemEnvironment sets JAVA_HOME and PATH in SYSTEM environment variables (persistent)
+// Requires Administrator privileges
+func (m *Manager) SetSystemEnvironment(version string) error {
+	javaHome := filepath.Join(m.installDir, version)
+
+	// Verify installation exists
+	if _, err := os.Stat(javaHome); os.IsNotExist(err) {
+		return fmt.Errorf("version %s is not installed", version)
+	}
+
+	javaBin := filepath.Join(javaHome, "bin")
+
+	// Open SYSTEM environment registry key
+	key, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\Session Manager\Environment`, registry.ALL_ACCESS)
+	if err != nil {
+		return fmt.Errorf("failed to open registry (admin rights required?): %w", err)
+	}
+	defer key.Close()
+
+	// Set JAVA_HOME
+	if err := key.SetStringValue("JAVA_HOME", javaHome); err != nil {
+		return fmt.Errorf("failed to set JAVA_HOME: %w", err)
+	}
+
+	// Update PATH
+	currentPath, _, err := key.GetStringValue("Path")
+	if err != nil && err != registry.ErrNotExist {
+		return fmt.Errorf("failed to read PATH: %w", err)
+	}
+
+	newPath := m.updatePathString(currentPath, javaBin)
+
+	if err := key.SetStringValue("Path", newPath); err != nil {
+		return fmt.Errorf("failed to set PATH: %w", err)
+	}
 
 	return nil
+}
+
+// updatePathString handles the logic of removing old/conflicting Java paths
+// and prepending the new one
+func (m *Manager) updatePathString(currentPath, javaBin string) string {
+	pathParts := strings.Split(currentPath, ";")
+	var newPathParts []string
+
+	cleanInstallDir := strings.ToLower(m.installDir)
+	cleanJavaBin := strings.ToLower(javaBin)
+
+	for _, part := range pathParts {
+		if part == "" {
+			continue
+		}
+		partLower := strings.ToLower(part)
+
+		// Remove if it's managed by JVT (in install dir)
+		if strings.HasPrefix(partLower, cleanInstallDir) {
+			continue
+		}
+
+		// Remove if it's the exact new path
+		if partLower == cleanJavaBin {
+			continue
+		}
+
+		// Remove other Java installations
+		if strings.Contains(partLower, "java") ||
+			strings.Contains(partLower, "jdk") ||
+			strings.Contains(partLower, "jre") ||
+			strings.Contains(partLower, "adoptium") ||
+			strings.Contains(partLower, "temurin") {
+			continue
+		}
+
+		newPathParts = append(newPathParts, part)
+	}
+
+	// Add new Java bin to the BEGINNING
+	newPathParts = append([]string{javaBin}, newPathParts...)
+	return strings.Join(newPathParts, ";")
 }
 
 // checkSystemJava checks if there's a system-level Java installation
@@ -168,7 +203,7 @@ func (m *Manager) checkSystemJava() {
 	}
 
 	if len(systemJavaPaths) > 0 {
-		fmt.Println("\n⚠️  WARNING: System-level Java installation detected!")
+		fmt.Println("\nWARNING: System-level Java installation detected!")
 		fmt.Println("The following Java paths are in SYSTEM PATH (requires admin to remove):")
 		for _, p := range systemJavaPaths {
 			fmt.Printf("  - %s\n", p)
@@ -180,13 +215,6 @@ func (m *Manager) checkSystemJava() {
 		fmt.Println("  3. Remove the Java-related entries listed above")
 		fmt.Println("  4. Restart your terminal")
 	}
-}
-
-// broadcastEnvironmentChange notifies Windows of environment variable changes
-func (m *Manager) broadcastEnvironmentChange() {
-	// This would require syscall to SendMessageTimeout
-	// For now, we'll just inform the user to restart their terminal
-	fmt.Println("\nNote: Please restart your terminal or command prompt for changes to take effect.")
 }
 
 // GetCurrentVersion returns the currently active Java version

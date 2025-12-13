@@ -6,6 +6,7 @@ import (
 	"github.com/rexqwer911/jvt/internal/config"
 	"github.com/rexqwer911/jvt/internal/install"
 	"github.com/rexqwer911/jvt/internal/registry"
+	"github.com/rexqwer911/jvt/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -32,9 +33,17 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
+		// Get current version for checking
+		mgr := version.NewManager(cfg.InstallDir)
+		currentVersion, _ := mgr.GetCurrentVersion() // Ignore error (might not be set)
+
 		fmt.Println("Installed Java versions:")
 		for _, v := range versions {
-			fmt.Printf("  * %s\n", v)
+			if v == currentVersion {
+				fmt.Printf("  * %s (current)\n", v)
+			} else {
+				fmt.Printf("    %s\n", v)
+			}
 		}
 
 		return nil

@@ -13,7 +13,7 @@ import (
 var useCmd = &cobra.Command{
 	Use:   "use <version>",
 	Short: "Switch to a specific Java version",
-	Long:  "Switch the active Java version for the current session.",
+	Long:  "Switch the active Java version definitively (updates both current session and system defaults).",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		versionStr := args[0]
@@ -58,16 +58,35 @@ var useCmd = &cobra.Command{
 			return fmt.Errorf("version %s is not installed", versionStr)
 		}
 
-		// Set environment
+		// Manage environment
 		mgr := version.NewManager(cfg.InstallDir)
+
+		// 1. Set Persistent Environment (Registry)
+		// First try User environment (always should succeed)
+		if err := mgr.SetUserEnvironment(matchedVersion); err != nil {
+			return fmt.Errorf("failed to set user environment: %w", err)
+		}
+
+		// Then try System environment (might fail if not Admin)
+		if err := mgr.SetSystemEnvironment(matchedVersion); err != nil {
+			// Check if it's likely a permission error
+			// On Windows, syscall.ERROR_ACCESS_DENIED is 5
+			fmt.Printf("\n⚠️  Note: Could not update System environment variables (requires Administrator).\n")
+			fmt.Printf("   Reason: %v\n", err)
+			fmt.Println("   Only User environment variables were updated.")
+		} else {
+			fmt.Println("✓ System environment variables updated.")
+		}
+
+		// 2. Set Current Session Environment
 		if err := mgr.SetEnvironment(matchedVersion); err != nil {
-			return fmt.Errorf("failed to set environment: %w", err)
+			// Warn but don't fail if session update fails (e.g. maybe restricted)
+			// But usually it should work if registry worked?
+			// Actually failure here is annoying for the user.
+			fmt.Printf("Warning: failed to set current session environment: %v\n", err)
 		}
 
 		fmt.Printf("✓ Now using Java %s\n", matchedVersion)
-		fmt.Println("Note: This only affects the current terminal session.")
-		fmt.Printf("To set as default, use: jvt default %s\n", versionStr)
-
 		return nil
 	},
 }
@@ -91,60 +110,6 @@ var currentCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Current Java version: %s\n", currentVersion)
-		return nil
-	},
-}
-
-var defaultCmd = &cobra.Command{
-	Use:   "default <version>",
-	Short: "Set the default Java version",
-	Long:  "Set which Java version should be used by default (persistent).",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		versionStr := args[0]
-
-		cfg, err := config.GetConfig()
-		if err != nil {
-			return fmt.Errorf("failed to get config: %w", err)
-		}
-
-		// Find installed version
-		installer := install.NewInstaller(cfg.InstallDir)
-		versions, err := installer.ListInstalled()
-		if err != nil {
-			return fmt.Errorf("failed to list installed versions: %w", err)
-		}
-
-		var matchedVersion string
-		if _, err := strconv.Atoi(versionStr); err == nil {
-			for _, v := range versions {
-				if len(v) >= len(versionStr) && v[0:len(versionStr)] == versionStr {
-					matchedVersion = v
-					break
-				}
-			}
-		} else {
-			for _, v := range versions {
-				if v == versionStr {
-					matchedVersion = v
-					break
-				}
-			}
-		}
-
-		if matchedVersion == "" {
-			return fmt.Errorf("version %s is not installed", versionStr)
-		}
-
-		// Set as default (persistent)
-		mgr := version.NewManager(cfg.InstallDir)
-		if err := mgr.SetUserEnvironment(matchedVersion); err != nil {
-			return fmt.Errorf("failed to set default version: %w", err)
-		}
-
-		fmt.Printf("✓ Java %s set as default\n", matchedVersion)
-		fmt.Println("\nPlease restart your terminal for changes to take effect.")
-
 		return nil
 	},
 }
