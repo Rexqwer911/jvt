@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $packageName = 'jvt'
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v1.1.0/jvt-windows-amd64.zip'
+$url64 = 'https://github.com/rexqwer911/jvt/releases/download/v1.2.0/jvt-windows-amd64.zip'
 
 $packageArgs = @{
   packageName    = $packageName
@@ -14,8 +14,6 @@ $packageArgs = @{
 
 Install-ChocolateyZipPackage @packageArgs
 
-# Add to PATH
-Install-ChocolateyPath -PathToInstall $toolsDir -PathType 'User'
 
 Write-Host "JVT has been installed successfully!"
 Write-Host "Run 'jvt --help' to get started."

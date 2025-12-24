@@ -4,13 +4,16 @@
 [![Chocolatey](https://img.shields.io/chocolatey/v/jvt)](https://community.chocolatey.org/packages/jvt)
 [![License](https://img.shields.io/github/license/rexqwer911/jvt)](LICENSE)
 
-A command-line utility for Windows that simplifies downloading, installing, and switching between different Java versions - similar to nvm for Node.js.
+A cross-platform command-line utility that simplifies downloading, installing, and switching between different Java versions - similar to nvm for Node.js.
 
 ## Downloads
 
 **Latest Release:**
-- **[Download jvt-installer.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-installer.exe)** - Installer executable
-- **[Download jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)** - ZIP archive
+- **[Download jvt-installer.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-installer.exe)** - Installer executable (Windows)
+- **[Download jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)** - ZIP archive (Windows x64)
+- **[Download jvt-macos-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-macos-amd64.zip)** - ZIP archive (macOS x64)
+- **[Download jvt-macos-arm64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-macos-arm64.zip)** - ZIP archive (macOS ARM64)
+- **[Download jvt-linux-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-linux-amd64.zip)** - ZIP archive (Linux x64) 
 
 Or view [all releases](https://github.com/rexqwer911/jvt/releases)
 
@@ -21,27 +24,47 @@ Or view [all releases](https://github.com/rexqwer911/jvt/releases)
 - Remove unused Java installations
 - List available and installed Java versions
 - Support for major Java distributions (Oracle JDK, OpenJDK, Temurin, etc.)
+- Cross-platform support (Windows, macOS, Linux)
 
 ## Installation
 
-### Option 1: Direct Download (Easiest)
+### Windows
+
+#### Option 1: Direct Download (Easiest)
 1. **[Download jvt-installer.exe](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-installer.exe)**
 2. Run the installer
 
-### Option 2: Via Chocolatey
+#### Option 2: Via Chocolatey
 ```bash
 choco install jvt
 ```
 
-### Option 3: Manual Installation from ZIP
+#### Option 3: Manual Installation from ZIP
 1. Download [jvt-windows-amd64.zip](https://github.com/rexqwer911/jvt/releases/latest/download/jvt-windows-amd64.zip)
 2. Extract `jvt.exe` to a directory (e.g., `C:\Program Files\jvt`)
 3. Add the directory to your PATH environment variable
 
+### macOS / Linux
+
+1. Download the archive for your OS and architecture (e.g., `jvt-macos-arm64.zip` or `jvt-linux-amd64.zip`).
+2. Extract the archive.
+3. Move the `jvt` binary to a location in your PATH (e.g., `/usr/local/bin`).
+   ```bash
+   unzip jvt-macos-arm64.zip
+   sudo mv jvt /usr/local/bin/
+   chmod +x /usr/local/bin/jvt
+   ```
+4. **Important:** Add the JVT shell initialization to your shell config (e.g., `~/.zshrc`, `~/.bashrc`, or `~/.bash_profile`):
+   ```bash
+   # Add this line to your shell config file
+   eval "$(jvt env)"
+   ```
+5. Restart your terminal or source your config file.
+
 ## Usage
 
 ```bash
-# List available Java versions
+# List available Java versions for download
 jvt list-remote
 
 # Install a specific Java version
@@ -50,13 +73,13 @@ jvt install 21
 # List installed versions
 jvt list
 
-# Use a specific version
+# Switch to a specific version (persists across sessions)
 jvt use 21
 
 # Uninstall a version
 jvt uninstall 11
 
-# Show current version
+# Show current active version
 jvt current
 # or
 java -version
@@ -66,15 +89,18 @@ java -version
 
 ### Prerequisites
 - Go 1.21 or higher
-- Windows 10/11
 
 ### Building from Source
+
 ```bash
-go build -o jvt.exe cmd/jvt/main.go
-```
-or
-```bash
-make build
+# Windows
+make build-windows
+
+# macOS (Intel & Apple Silicon)
+make build-macos
+
+# Linux
+make build-linux
 ```
 
 ## Project Structure
@@ -97,7 +123,6 @@ jvt/
 ├── go.sum
 ├── README.md
 └── CHANGELOG.md
-
 ```
 
 ## License

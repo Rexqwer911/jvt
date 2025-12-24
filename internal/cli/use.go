@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 
 	"github.com/rexqwer911/jvt/internal/config"
@@ -67,15 +68,17 @@ var useCmd = &cobra.Command{
 			return fmt.Errorf("failed to set user environment: %w", err)
 		}
 
-		// Then try System environment (might fail if not Admin)
-		if err := mgr.SetSystemEnvironment(matchedVersion); err != nil {
-			// Check if it's likely a permission error
-			// On Windows, syscall.ERROR_ACCESS_DENIED is 5
-			fmt.Printf("\n⚠️  Note: Could not update System environment variables (requires Administrator).\n")
-			fmt.Printf("   Reason: %v\n", err)
-			fmt.Println("   Only User environment variables were updated.")
-		} else {
-			fmt.Println("✓ System environment variables updated.")
+		// Then try System environment (Windows only)
+		if runtime.GOOS == "windows" {
+			if err := mgr.SetSystemEnvironment(matchedVersion); err != nil {
+				// Check if it's likely a permission error
+				// On Windows, syscall.ERROR_ACCESS_DENIED is 5
+				fmt.Printf("\nNote: Could not update System environment variables (requires Administrator).\n")
+				fmt.Printf("   Reason: %v\n", err)
+				fmt.Println("   Only User environment variables were updated.")
+			} else {
+				fmt.Println("✓ System environment variables updated.")
+			}
 		}
 
 		// 2. Set Current Session Environment

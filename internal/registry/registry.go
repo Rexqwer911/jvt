@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -134,9 +135,29 @@ func (r *Registry) fetchVersionFromAdoptium(majorVersion int) error {
 		return fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
-	// Extract Windows x64 JDK binaries
+	// Determine current OS and Arch
+	targetOS := runtime.GOOS
+	if targetOS == "darwin" {
+		targetOS = "mac"
+	}
+
+	targetArch := runtime.GOARCH
+	if targetArch == "amd64" {
+		targetArch = "x64"
+	}
+	// arm64 is usually aarch64 in Adoptium, but sometimes just arm64.
+	// Adoptium API uses: x64, x32, ppc64, s390x, ppc64le, aarch64, arm
+	if targetArch == "arm64" {
+		targetArch = "aarch64"
+	}
+
+	// Extract binaries matching current OS/Arch
 	for _, release := range releases {
-		if release.Binary.OS == "windows" && release.Binary.Architecture == "x64" && release.Binary.ImageType == "jdk" {
+		// Strict matching for OS and Architecture
+		if release.Binary.OS == targetOS &&
+			release.Binary.Architecture == targetArch &&
+			release.Binary.ImageType == "jdk" {
+
 			version := fmt.Sprintf("%d.%d.%d+%d",
 				release.Version.Major,
 				release.Version.Minor,
@@ -147,8 +168,8 @@ func (r *Registry) fetchVersionFromAdoptium(majorVersion int) error {
 				Version:      version,
 				MajorVersion: release.Version.Major,
 				Distribution: "Temurin",
-				OS:           "windows",
-				Arch:         "x64",
+				OS:           release.Binary.OS,
+				Arch:         release.Binary.Architecture,
 				DownloadURL:  release.Binary.Package.Link,
 				Checksum:     release.Binary.Package.Checksum,
 				FileName:     release.Binary.Package.Name,

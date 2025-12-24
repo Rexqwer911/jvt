@@ -1,7 +1,9 @@
 package install
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
@@ -42,9 +44,20 @@ func (i *Installer) Install(archivePath, version string) error {
 
 	// Extract archive
 	fmt.Printf("Extracting to %s...\n", versionDir)
-	if err := i.extractZip(archivePath, versionDir); err != nil {
-		os.RemoveAll(versionDir) // Clean up on error
-		return fmt.Errorf("failed to extract archive: %w", err)
+
+	if strings.HasSuffix(archivePath, ".zip") {
+		if err := i.extractZip(archivePath, versionDir); err != nil {
+			os.RemoveAll(versionDir) // Clean up on error
+			return fmt.Errorf("failed to extract zip archive: %w", err)
+		}
+	} else if strings.HasSuffix(archivePath, ".tar.gz") {
+		if err := i.extractTarGz(archivePath, versionDir); err != nil {
+			os.RemoveAll(versionDir) // Clean up on error
+			return fmt.Errorf("failed to extract tar.gz archive: %w", err)
+		}
+	} else {
+		os.RemoveAll(versionDir)
+		return fmt.Errorf("unsupported archive format: %s", archivePath)
 	}
 
 	fmt.Printf("Java %s installed successfully!\n", version)
@@ -117,6 +130,88 @@ func (i *Installer) extractZip(archivePath, destDir string) error {
 
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// extractTarGz extracts a tar.gz archive to the destination directory
+func (i *Installer) extractTarGz(archivePath, destDir string) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	uncompressedStream, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer uncompressedStream.Close()
+
+	tarReader := tar.NewReader(uncompressedStream)
+
+	// Find the root directory
+	// In tar.gz, we invoke Next() to get headers. We can't easily peek first like in zip.
+	// So we'll have to detect rootDir on the fly or assuming the first entry determines it if it's a dir.
+	// However, tar ordering isn't guaranteed to be depth-first strictly, but usually is.
+
+	// A simpler approach for stripping root component:
+	// Determine root component from the first entry.
+	var rootDir string
+
+	for {
+		header, err := tarReader.Next()
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if rootDir == "" {
+			parts := strings.Split(header.Name, "/")
+			if len(parts) > 0 {
+				rootDir = parts[0]
+			}
+		}
+
+		relativePath := header.Name
+		if rootDir != "" && strings.HasPrefix(relativePath, rootDir+"/") {
+			relativePath = strings.TrimPrefix(relativePath, rootDir+"/")
+		}
+
+		if relativePath == "" {
+			continue
+		}
+
+		fpath := filepath.Join(destDir, relativePath)
+
+		// Check for ZipSlip
+		if !strings.HasPrefix(fpath, filepath.Clean(destDir)+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path: %s", fpath)
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(fpath, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(fpath), 0755); err != nil {
+				return err
+			}
+			outFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(outFile, tarReader); err != nil {
+				outFile.Close()
+				return err
+			}
+			outFile.Close()
 		}
 	}
 

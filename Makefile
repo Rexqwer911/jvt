@@ -1,4 +1,4 @@
-.PHONY: build test clean install run help
+.PHONY: build-windows build-windows-installer build-linux build-macos clean deps
 
 # Build variables
 BINARY_NAME=jvt.exe
@@ -8,23 +8,31 @@ MAIN_PATH=cmd/jvt/main.go
 # Go parameters
 GOCMD=go
 GOBUILD=$(GOCMD) build
-GOTEST=$(GOCMD) test
 GOCLEAN=$(GOCMD) clean
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 
-help: ## Show this help message
-	@echo "Available targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
-
-build: ## Build the binary
-	@echo "Building $(BINARY_NAME)..."
-	@$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+build-windows: ## Build the binary for Windows
+	@echo "Building $(BINARY_NAME) for Windows..."
+	@set GOOS=windows&& set GOARCH=amd64&& $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
-test: ## Run tests
-	@echo "Running tests..."
-	@$(GOTEST) -v ./...
+build-windows-installer: build ## Build Windows Installer (requires Inno Setup)
+	@echo "Building Windows Installer..."
+	@iscc installer/jvt.iss
+	@echo "Installer created: installer/Output/jvt-setup.exe"
+
+build-linux: ## Build the binary for Linux
+	@echo "Building jvt-linux..."
+	@set GOOS=linux&& set GOARCH=amd64&& $(GOBUILD) -o $(BUILD_DIR)/jvt-linux $(MAIN_PATH)
+	@echo "Build complete: $(BUILD_DIR)/jvt-linux"
+
+build-macos: ## Build the binary for macOS (arm64 and x86_64 separated)
+	@echo "Building jvt-macos-amd64..."
+	@set GOOS=darwin&& set GOARCH=amd64&& $(GOBUILD) -o $(BUILD_DIR)/jvt-macos-amd64 $(MAIN_PATH)
+	@echo "Building jvt-macos-arm64..."
+	@set GOOS=darwin&& set GOARCH=arm64&& $(GOBUILD) -o $(BUILD_DIR)/jvt-macos-arm64 $(MAIN_PATH)
+	@echo "Build complete: $(BUILD_DIR)/jvt-macos-*"
 
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
@@ -36,27 +44,3 @@ deps: ## Download dependencies
 	@echo "Downloading dependencies..."
 	@$(GOMOD) download
 	@$(GOMOD) tidy
-
-run: ## Run the application
-	@$(GOCMD) run $(MAIN_PATH)
-
-install: build ## Install the binary to GOPATH/bin
-	@echo "Installing $(BINARY_NAME)..."
-	@cp $(BUILD_DIR)/$(BINARY_NAME) $(GOPATH)/bin/
-	@echo "Installed to $(GOPATH)/bin/$(BINARY_NAME)"
-
-release: ## Build release version
-	@echo "Building release..."
-	@mkdir -p dist
-	@$(GOBUILD) -ldflags="-s -w" -o dist/$(BINARY_NAME) $(MAIN_PATH)
-	@echo "Release build complete: dist/$(BINARY_NAME)"
-
-choco-pack: release ## Create Chocolatey package
-	@echo "Creating Chocolatey package..."
-	@cd chocolatey && choco pack
-	@echo "Chocolatey package created"
-
-installer: build ## Build Windows Installer (requires Inno Setup)
-	@echo "Building Windows Installer..."
-	@iscc installer/jvt.iss
-	@echo "Installer created: installer/Output/jvt-setup.exe"
