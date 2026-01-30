@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-30
+
+### Added
+- New `upgrade` command to update installed Java versions to the latest available version
+  - `jvt upgrade <major-version>` - upgrade specific major version
+  - `jvt upgrade --all` - upgrade all installed versions
+  - `jvt upgrade --dry-run` - check for updates without installing
+  - `jvt upgrade --keep-old` - keep old version after upgrade
+- Version comparison functionality for detecting available updates
+- Automatic switching to new version if old version was active
+- Methods for filtering installed versions by major version
+
 ## [1.2.0] - 2025-12-16
 
 ### Added

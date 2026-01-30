@@ -1,5 +1,5 @@
 #define MyAppName "JVT"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "Rexqwer911"
 #define MyAppURL "https://github.com/rexqwer911/jvt"
 #define MyAppExeName "jvt.exe"

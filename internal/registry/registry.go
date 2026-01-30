@@ -229,3 +229,28 @@ func (r *Registry) GetMajorVersions() []int {
 	sort.Sort(sort.Reverse(sort.IntSlice(majors)))
 	return majors
 }
+
+// FindLatestForMajor finds the latest version for a specific major version
+func (r *Registry) FindLatestForMajor(majorVersion int) (*JavaVersion, error) {
+	// If versions are not loaded, fetch them
+	if len(r.versions) == 0 {
+		if err := r.FetchAvailableVersions(); err != nil {
+			return nil, fmt.Errorf("failed to fetch versions: %w", err)
+		}
+	}
+
+	// Find all versions matching the major version
+	var candidates []JavaVersion
+	for _, v := range r.versions {
+		if v.MajorVersion == majorVersion {
+			candidates = append(candidates, v)
+		}
+	}
+
+	if len(candidates) == 0 {
+		return nil, fmt.Errorf("no versions found for Java %d", majorVersion)
+	}
+
+	// Return the first one (versions are already sorted with latest first)
+	return &candidates[0], nil
+}

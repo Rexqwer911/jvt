@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -265,3 +267,67 @@ func (i *Installer) IsInstalled(version string) bool {
 func (i *Installer) GetJavaHome(version string) string {
 	return filepath.Join(i.installDir, version)
 }
+
+// GetInstalledByMajor returns installed versions for a specific major version
+func (i *Installer) GetInstalledByMajor(majorVersion int) ([]string, error) {
+	allVersions, err := i.ListInstalled()
+	if err != nil {
+		return nil, err
+	}
+
+	var matchingVersions []string
+	for _, version := range allVersions {
+		major, err := GetMajorVersion(version)
+		if err != nil {
+			continue // Skip invalid version formats
+		}
+		if major == majorVersion {
+			matchingVersions = append(matchingVersions, version)
+		}
+	}
+
+	return matchingVersions, nil
+}
+
+// GetMajorVersion extracts the major version number from a version string
+func GetMajorVersion(versionStr string) (int, error) {
+	// Split by '.' to get major version
+	parts := strings.Split(versionStr, ".")
+	if len(parts) == 0 {
+		return 0, fmt.Errorf("invalid version format: %s", versionStr)
+	}
+
+	major, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, fmt.Errorf("invalid major version: %s", parts[0])
+	}
+
+	return major, nil
+}
+
+// GetInstalledMajorVersions returns unique major versions from installed versions
+func (i *Installer) GetInstalledMajorVersions() ([]int, error) {
+	allVersions, err := i.ListInstalled()
+	if err != nil {
+		return nil, err
+	}
+
+	majorVersions := make(map[int]bool)
+	for _, version := range allVersions {
+		major, err := GetMajorVersion(version)
+		if err != nil {
+			continue
+		}
+		majorVersions[major] = true
+	}
+
+	var result []int
+	for major := range majorVersions {
+		result = append(result, major)
+	}
+
+	// Sort in descending order
+	sort.Sort(sort.Reverse(sort.IntSlice(result)))
+	return result, nil
+}
+

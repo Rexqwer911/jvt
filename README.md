@@ -79,6 +79,12 @@ jvt use 21
 # Uninstall a version
 jvt uninstall 11
 
+# Upgrade Java to the latest version
+jvt upgrade 17                 # Upgrade Java 17 to latest
+jvt upgrade --all              # Upgrade all installed versions
+jvt upgrade --all --dry-run    # Check for updates without installing
+jvt upgrade --all --keep-old   # Upgrade but keep old versions
+
 # Show current active version
 jvt current
 # or

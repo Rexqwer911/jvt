@@ -7,11 +7,11 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "jvt",
 	Short: "Java Version Tool - Manage multiple Java installations",
-	Long: `JVT (Java Version Tool) is a command-line utility for Windows that helps you
+	Long: `JVT (Java Version Tool) is a command-line utility that helps you
 download, install, and switch between different Java versions easily.
 
-Similar to nvm for Node.js, jvt simplifies Java version management on Windows.`,
-	Version: "1.2.0",
+Similar to nvm for Node.js, jvt simplifies Java version management.`,
+	Version: "1.3.0",
 }
 
 // Execute runs the root command
@@ -27,4 +27,5 @@ func init() {
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(currentCmd)
+	rootCmd.AddCommand(upgradeCmd)
 }
